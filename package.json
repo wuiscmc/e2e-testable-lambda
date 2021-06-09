@@ -3,11 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "npm run test-integration",
-    "test-unit": "mocha tests/unit/ --recursive --reporter spec --colors",
-    "watch-unit": "mocha tests/unit/ --recursive --reporter min --colors --watch",
-    "test-integration": "NODE_ENV=test mocha tests/integration/ --reporter spec --colors --recursive --timeout 50000"
+  "scripts": {    
+    "test": "NODE_ENV=test mocha tests/integration/ --reporter spec --colors --recursive --timeout 50000"
   },
   "author": "",
   "license": "ISC",
@@ -18,7 +15,6 @@
   "devDependencies": {
     "adm-zip": "^0.4.11",
     "chai": "^4.1.2",
-    "mocha": "^5.2.0",
-    "prettier-miscellaneous": "^1.5.3"
+    "mocha": "^5.2.0"
   }
 }
