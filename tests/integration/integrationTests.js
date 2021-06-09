@@ -17,7 +17,7 @@ const lambda = new AWS.Lambda({
 const invokeLambdaFunction = async (record) => {
 	return await lambda
 		.invoke({
-			FunctionName: 'cw-input',
+			FunctionName: 'testable-lambda-fn',
 			InvocationType: 'RequestResponse',
 			Payload: JSON.stringify(record)
 		})
@@ -29,7 +29,7 @@ describe('integration tests', () => {
 		await lambda
 			.createFunction({
 				Handler: 'index.handler',
-				FunctionName: 'cw-input',
+				FunctionName: 'testable-lambda-fn',
 				Runtime: 'nodejs14.x',
 				Role: 'role',
 				Code: {
@@ -52,7 +52,7 @@ describe('integration tests', () => {
 	after(async () => {
 		await lambda
 			.deleteFunction({
-				FunctionName: 'cw-input'
+				FunctionName: 'testable-lambda-fn'
 			})
 			.promise();
 	});

@@ -30,8 +30,7 @@ const setupLambda = async (functionName) => {
 
 	const zip = new AdmZip();
 
-	zip.addLocalFolder('/app/node_modules_production', './node_modules');
-	zip.addLocalFolder('/app/src', './src');
+	zip.addLocalFolder('/app/node_modules', './node_modules');
 	zip.addLocalFile('/app/index.js', './');
 
 	console.log('Creating Function');
@@ -41,11 +40,10 @@ const setupLambda = async (functionName) => {
 			Environment: {
 				Variables: {
 					TEST_MODE: 'true',
-					TABLE_NAME: 'TestableLambda'
 				}
 			},
 			FunctionName: functionName,
-			Runtime: 'nodejs8.10',
+			Runtime: 'nodejs14.x',
 			Role: 'role',
 			Code: {
 				ZipFile: zip.toBuffer()
@@ -58,11 +56,11 @@ const setupLambda = async (functionName) => {
 };
 
 const createSourceMapping = async (streamArn) => {
-	const functionName = 'TestableLambda-Input-Lambda-' + Date.now();
 	await setupLambda(functionName);
+
 	const lambdaParams = {
 		EventSourceArn: streamArn,
-		FunctionName: functionName,
+		FunctionName: 'TestableLambda-Input-Lambda-' + Date.now(),
 		Enabled: true,
 		StartingPosition: 'LATEST'
 	};
