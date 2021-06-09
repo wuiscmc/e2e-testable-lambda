@@ -1,0 +1,23 @@
+version: '3.3'
+services:
+  test-runner:
+    image: testable-lambda-example-test-runner:latest
+    command: npm run test
+    environment:
+      TEST_MODE: 'true'
+      AWS_REGION: eu-west-1
+    depends_on: 
+      - localstack
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - 4566
+    environment:
+      SERVICES: lambda
+      DOCKER_HOST: unix:///var/run/docker.sock
+      LAMBDA_EXECUTOR: docker
+      DEBUG: 1
+      AWS_REGION: eu-west-1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
