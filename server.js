@@ -20,7 +20,7 @@ const getLambdaConnection = () => {
     accessKeyId: 'identity',
     secretAccessKey: 'credential',
     endpoint: 'http://localstack:4566',
-    region: 'eu-west-1'
+    region: process.env.AWS_REGION
   });
 
   return lambdaConnection;
