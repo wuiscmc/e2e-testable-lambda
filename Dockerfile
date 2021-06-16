@@ -7,17 +7,17 @@ ARG NODE_VERSION=16
 FROM node:${NODE_VERSION}-alpine${NODE_BASE_IMAGE_TAG} AS build-env
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm install 
+RUN npm install
 
 ##############
-### dev ##
+### server  ##
 ##############
-FROM node:${NODE_VERSION}-alpine${NODE_BASE_IMAGE_TAG} AS dev
+FROM node:${NODE_VERSION}-alpine${NODE_BASE_IMAGE_TAG} AS server
 WORKDIR /app
 COPY package.json ./
 COPY --from=build-env /app/node_modules/ node_modules/
 
-COPY .gitignore package.json index.js server.js ./
+COPY package.json index.js server.js ./
 
 CMD ["node", "server.js"]
 
@@ -30,7 +30,7 @@ COPY package.json ./
 COPY --from=build-env /app/node_modules/ node_modules/
 
 # Add app files
-COPY .gitignore package.json index.js ./
+COPY package.json index.js ./
 
 # Copy test files
 COPY tests/ ./tests

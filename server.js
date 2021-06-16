@@ -8,109 +8,130 @@ const AWS = require('aws-sdk');
 const port = process.env.HTTP_SERVER_PORT || 80;
 
 let lambdaConnection;
+let lambdaFunction;
 
 const getLambdaConnection = () => {
-	if (lambdaConnection) {
-		return lambdaConnection;
-	}
+  if (lambdaConnection) {
+    return lambdaConnection;
+  }
 
-	lambdaConnection = new AWS.Lambda({
-		apiVersion: '2015-03-31',
-		accessKeyId: 'identity',
-		secretAccessKey: 'credential',
-		endpoint: 'http://localstack:4566',
-		region: 'eu-west-1'
-	});
+  lambdaConnection = new AWS.Lambda({
+    apiVersion: '2015-03-31',
+    accessKeyId: 'identity',
+    secretAccessKey: 'credential',
+    endpoint: 'http://localstack:4566',
+    region: 'eu-west-1'
+  });
 
-	return lambdaConnection;
+  return lambdaConnection;
 };
 
-const setupLambda = async (functionName) => {
-	console.log('Zipping files');
+const getLambda = async () => {
+  if(lambdaFunction) {
+    console.log('Returning Lambda from memory cache');
+    return lambdaFunction;
+  }
 
-	const zip = new AdmZip();
+  console.log('Zipping files');
 
-	zip.addLocalFolder('/app/node_modules', './node_modules');
-	zip.addLocalFile('/app/index.js', './');
+  const zip = new AdmZip();
 
-	console.log('Creating Function');
-	const lambdaFunction = await getLambdaConnection()
-		.createFunction({
-			Handler: 'index.handler',
-			Environment: {
-				Variables: {
-					TEST_MODE: 'true',
-				}
-			},
-			FunctionName: functionName,
-			Runtime: 'nodejs14.x',
-			Role: 'role',
-			Code: {
-				ZipFile: zip.toBuffer()
-			}
-		})
-		.promise();
+  zip.addLocalFolder('/app/node_modules', './node_modules');
+  zip.addLocalFile('/app/index.js', './');
 
-	console.log('Function created', lambdaFunction);
-	return lambdaFunction;
+  const ZipFile = zip.toBuffer();
+
+  console.log('Creating Function');
+
+  lambdaFunction = await getLambdaConnection()
+    .createFunction({
+      Handler: 'index.handler',
+      Environment: {
+        Variables: {
+          TEST_MODE: 'true',
+        }
+      },
+      FunctionName: 'TestableLambda-Lambda-' + Date.now(),
+      Runtime: 'nodejs14.x',
+      Role: 'role',
+      Code: {
+        ZipFile
+      }
+    })
+    .promise();
+
+  console.log('Function created', lambdaFunction);
+  return lambdaFunction;
 };
 
 const createSourceMapping = async (streamArn) => {
-	await setupLambda(functionName);
+  await getLambda();
 
-	const lambdaParams = {
-		EventSourceArn: streamArn,
-		FunctionName: 'TestableLambda-Input-Lambda-' + Date.now(),
-		Enabled: true,
-		StartingPosition: 'LATEST'
-	};
+  const lambdaParams = {
+    EventSourceArn: streamArn,
+    Enabled: true,
+    StartingPosition: 'LATEST'
+  };
 
-	console.log('Creating source mapping: ', lambdaParams);
+  console.log('Creating source mapping: ', lambdaParams);
 
-	await getLambdaConnection().createEventSourceMapping(lambdaParams).promise();
+  await getLambdaConnection().createEventSourceMapping(lambdaParams).promise();
 };
 
 const server = http.createServer();
 
 server.on('request', async (req, res) => {
-	res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Type', 'application/json');
 
-	const myUrl = url.parse(req.url, true);
+  const myUrl = url.parse(req.url, true);
 
-	let response = '';
-	try {
-		switch (myUrl.pathname) {
-			case '/test':
-				console.log(myUrl.query, myUrl.path);
-				response = 'YEAH';
-				break;
+  let response = '';
+  try {
+    switch (myUrl.pathname) {
+      case '/test':
+        console.log(myUrl.query, myUrl.path);
+        response = 'YEAH';
+        break;
 
-			case '/createSourceMapping':
-				const {arn} = myUrl.query;
-				await createSourceMapping(arn);
-				console.log('DONE');
-				response = 'done';
-				break;
-			default:
-				response = 'OOUPS';
-		}
+      case '/createSourceMapping':
+        const {arn} = myUrl.query;
+        console.log('Mapping: creating for ', arn);
+        await createSourceMapping(arn);
+        console.log('Mapping: mapped ', arn);
+        response = 'done';
+        break;
 
-		res.writeHead(200);
-	} catch (error) {
-		res.writeHead(400);
-		response = error;
-	}
+      case '/arn':
+        console.log('Arn: requested lambda arn');
+        response = JSON.stringify({
+          data: {
+            arn: (await getLambda()).FunctionArn
+          }
+        });
 
-	res.end(response || 'DONE');
+        break;
+
+      default:
+        response = 'OOUPS';
+    }
+
+    res.writeHead(200);
+  } catch (error) {
+    console.log(error);
+    res.writeHead(400);
+    response = error;
+  }
+
+  res.end(response || 'DONE');
 });
 
 server.listen(port, () => {
-	console.log('Listening on port ' + port);
+  console.log('Listening on port ' + port);
 });
 
 process.on('SIGTERM', () => {
-	server.close(() => {
-		console.log('shutting down');
-		process.exit(0);
-	});
+  server.close(() => {
+    console.log('shutting down');
+    process.exit(0);
+  });
 });

@@ -1,0 +1,25 @@
+services:
+  testable-lambda:
+    build:
+      context: .
+      target: server
+    environment:
+      TEST_MODE: 'true'
+      AWS_REGION: eu-west-1
+    ports:
+      - 1337:80
+    depends_on:
+      - localstack
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - 4566
+    environment:
+      SERVICES: lambda
+      DOCKER_HOST: unix:///var/run/docker.sock
+      LAMBDA_EXECUTOR: docker
+      DEBUG: 1
+      AWS_REGION: eu-west-1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
