@@ -104,9 +104,7 @@ server.on('request', async (req, res) => {
       case '/arn':
         console.log('Arn: requested lambda arn');
         response = JSON.stringify({
-          data: {
-            arn: (await getLambda()).FunctionArn
-          }
+          arn: (await getLambda()).FunctionArn
         });
 
         break;
