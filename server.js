@@ -49,6 +49,7 @@ const getLambda = async () => {
       Environment: {
         Variables: {
           TEST_MODE: 'true',
+          BUCKET: process.env.DEST_BUCKET
         }
       },
       FunctionName: 'TestableLambda-Lambda-' + Date.now(),
