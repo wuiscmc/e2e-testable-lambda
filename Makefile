@@ -11,7 +11,7 @@ docker-build:
 	@docker build --target=test-runner -t $(imagename)-test-runner .
 
 docker-test: docker-build
-	@$(docker-compose-cmd) up --force-recreate --abort-on-container-exit --remove-orphans && $(docker-compose-cmd) down
+	@$(docker-compose-cmd) up --build --force-recreate --abort-on-container-exit --remove-orphans && $(docker-compose-cmd) down
 
 clean:
 	rm -rf localstack/

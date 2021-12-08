@@ -1,11 +1,14 @@
+version: '3.9'
 services:
   testable-lambda:
     build:
       context: .
       target: server
     environment:
-      TEST_MODE: 'true'
+      AWS_FAKE_ENDPOINT: http://localstack:4566
       AWS_REGION: eu-west-1
+      SOURCE_BUCKET: source-bucket
+      DEST_BUCKET: dest-bucket
     ports:
       - 1337:80
     depends_on:
@@ -14,13 +17,12 @@ services:
   localstack:
     image: localstack/localstack
     ports:
-      - 4566
+      - '4566:4566'
     environment:
-      SERVICES: lambda
+      SERVICES: lambda,s3
       DOCKER_HOST: unix:///var/run/docker.sock
       LAMBDA_EXECUTOR: docker
       DEBUG: 1
       AWS_REGION: eu-west-1
-      DEFAULT_REGION: eu-west-1
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"

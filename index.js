@@ -2,7 +2,6 @@
 
 const serialize = require('serialize-error');
 const AWS = require('aws-sdk');
-const moment = require('moment');
 
 let S3;
 
@@ -11,22 +10,19 @@ const getS3Connection = () => {
     return S3;
   }
 
-  if(process.env.TEST_MODE) {
-    console.log('[DEBUG] Running in test mode');
-
-    S3 = new AWS.S3({
-      // the following is required if running lambda using the docker executor
-      endpoint: new AWS.Endpoint(`http://${process.env.LOCALSTACK_HOSTNAME}:4566`),
+  let s3ConnectionParams = {};
+  if(process.env.AWS_FAKE_ENDPOINT) {
+    s3ConnectionParams = {
+      // endpoint: new AWS.Endpoint(`http://${process.env.LOCALSTACK_HOSTNAME}:4566`),
+      endpoint: process.env.AWS_FAKE_ENDPOINT,
       accessKeyId: 'identity',
       secretAccessKey: 'credential',
-      s3ForcePathStyle: true
-    });
-
-    console.log('[DEBUG] blahonga');
-    return S3;
+      s3ForcePathStyle: true,
+      ...s3ConnectionParams,
+    };
   }
 
-  S3 = new AWS.S3();
+  S3 = new AWS.S3(s3ConnectionParams);
   return S3;
 }
 
@@ -52,10 +48,8 @@ exports.handler = async (event, context) => {
     console.log(`[DEBUG] Reading s3://${bucket.name}/${object.key}`);
     const {Body} = await getObject({ Key: object.key, Bucket: bucket.name });
 
-    const date = moment().format('YYYY/MM/DD');
-
-    console.log(`[DEBUG] Exporting to s3://${process.env.BUCKET}/${date}/${object.key}`);
-    await putObject({Key: `${date}/${object.key}`, Bucket: process.env.BUCKET, Body});
+    console.log(`[DEBUG] Exporting to s3://${process.env.BUCKET}/${object.key}`);
+    await putObject({Key: object.key, Bucket: process.env.BUCKET, Body});
 
     console.log(`[DEBUG] done!`);
     return {message: `parsed ${object.key}`};

@@ -1,23 +1,28 @@
-version: '3.3'
 services:
   test-runner:
-    image: testable-lambda-example-test-runner:latest
+    build:
+      context: .
+      target: test-runner
     command: npm run test
     environment:
-      TEST_MODE: 'true'
+      AWS_FAKE_ENDPOINT: http://localstack:4566
       AWS_REGION: eu-west-1
-    depends_on: 
+      SOURCE_BUCKET: source-bucket
+      DEST_BUCKET: dest-bucket
+    depends_on:
       - localstack
 
   localstack:
     image: localstack/localstack
     ports:
-      - 4566
+      - '4566:4566'
     environment:
-      SERVICES: lambda
+      SERVICES: lambda,s3
       DOCKER_HOST: unix:///var/run/docker.sock
-      LAMBDA_EXECUTOR: docker
-      DEBUG: 1
+      LAMBDA_DOCKER_NETWORK: testable-lambda-example_default
       AWS_REGION: eu-west-1
+      DEBUG: 1
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+
+version: '3.9'

@@ -13,7 +13,7 @@ module.exports = () => {
 	});
 
 	zip.addFile('index.js', indexFile);
-	zip.addFile('package.json', packageJson);	
+	zip.addFile('package.json', packageJson);
 	zip.addLocalFolder(process.cwd() + '/node_modules', './node_modules');
 	return zip.toBuffer();
 };
